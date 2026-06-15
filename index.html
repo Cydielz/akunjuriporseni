@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Akun Guru</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body{
+            background: linear-gradient(135deg, #87CEEB, #EAF8FF);
+            min-height:100vh;
+            padding:30px;
+        }
+
+        .container{
+            max-width:1200px;
+            margin:auto;
+        }
+
+        .header{
+            background:white;
+            padding:25px;
+            text-align:center;
+            border-radius:15px;
+            box-shadow:0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom:20px;
+        }
+
+        .header h1{
+            color:#008CFF;
+            margin-bottom:8px;
+        }
+
+        .header p{
+            color:#666;
+        }
+
+        .table-card{
+            background:white;
+            border-radius:15px;
+            overflow:hidden;
+            box-shadow:0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        thead{
+            background:#00A2FF;
+            color:white;
+        }
+
+        thead th{
+            padding:15px;
+            text-align:left;
+            font-size:15px;
+        }
+
+        tbody tr:nth-child(even){
+            background:#F4FAFF;
+        }
+
+        tbody tr:hover{
+            background:#DFF3FF;
+            transition:0.3s;
+        }
+
+        tbody td{
+            padding:14px;
+            border-bottom:1px solid #E0E0E0;
+        }
+
+        .badge{
+            background:#00A2FF;
+            color:white;
+            padding:5px 12px;
+            border-radius:20px;
+            font-size:13px;
+            font-weight:bold;
+        }
+
+        .footer{
+            text-align:center;
+            margin-top:20px;
+            color:#555;
+            font-size:14px;
+        }
+
+        @media(max-width:768px){
+            .table-card{
+                overflow-x:auto;
+            }
+
+            table{
+                min-width:800px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>DATA AKUN GURU</h1>
+        <p>Daftar Username dan Password Guru</p>
+    </div>
+
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama Lengkap</th>
+                    <th>Username</th>
+                    <th>Password</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td><span class="badge">1</span></td>
+                    <td>S.B ELSOIN, S.Sos, Gr</td>
+                    <td>Elsoin-SB</td>
+                    <td>Elsoin-SB</td>
+                </tr>
+
+                <tr>
+                    <td><span class="badge">2</span></td>
+                    <td>MAKMUN, S.Pd.I, Gr</td>
+                    <td>dzakyJR</td>
+                    <td>dzakyJR</td>
+                </tr>
+
+                <tr>
+                    <td><span class="badge">3</span></td>
+                    <td>KARYO SALALAY, S.Sos</td>
+                    <td>K-Salalay</td>
+                    <td>K-Salalay</td>
+                </tr>
+
+                <tr>
+                    <td><span class="badge">4</span></td>
+                    <td>WEHELMINA LABOK, S.Pd, Gr</td>
+                    <td>W-Labok</td>
+                    <td>W-Labok</td>
+                </tr>
+
+                <tr>
+                    <td><span class="badge">5</span></td>
+                    <td>MESAK O. WAKIM, S.Pd, Gr</td>
+                    <td>Ecek-naga</td>
+                    <td>Ecek-naga</td>
+                </tr>
+
+                <tr>
+                    <td><span class="badge">6</span></td>
+                    <td>HENGKY BALSALA, S.Pd, Gr</td>
+                    <td>PapiFrank</td>
+                    <td>PapiFrank</td>
+                </tr>
+
+                <tr>
+                    <td><span class="badge">7</span></td>
+                    <td>TADEUS DJONLER, S.Pd</td>
+                    <td>T-Djonler</td>
+                    <td>T-Djonler</td>
+                </tr>
+
+                <tr>
+                    <td><span class="badge">8</span></td>
+                    <td>YOSPINA SALOY, S.Pd</td>
+                    <td>Y-Saloy</td>
+                    <td>Y-Saloy</td>
+                </tr>
+
+                <tr>
+                    <td><span class="badge">9</span></td>
+                    <td>Lusiana Djonler, S.Pd</td>
+                    <td>L-Djonler</td>
+                    <td>L-Djonler</td>
+                </tr>
+
+                <tr>
+                    <td><span class="badge">10</span></td>
+                    <td>Ursula Djonler, S.Pd</td>
+                    <td>U-Djonler</td>
+                    <td>U-Djonler</td>
+                </tr>
+
+                <tr>
+                    <td><span class="badge">11</span></td>
+                    <td>YANI DJAMJIK</td>
+                    <td>Y-Djamjik</td>
+                    <td>Y-Djamjik</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        © 2026 Data Akun Guru
+    </div>
+
+</div>
+
+</body>
+</html>
