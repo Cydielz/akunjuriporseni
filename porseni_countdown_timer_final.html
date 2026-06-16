@@ -1,0 +1,261 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .wrapper {
+    min-height: 520px;
+    background: #FFC800;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 2rem;
+    font-family: var(--font-sans, sans-serif);
+  }
+  .badge {
+    background: #fff;
+    color: #A06000;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+  }
+  .title { font-size: 22px; font-weight: 500; color: #fff; margin-bottom: 0.4rem; text-align: center; }
+  .subtitle { font-size: 14px; color: rgba(255,255,255,0.85); margin-bottom: 2rem; text-align: center; }
+  .clock-face {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2rem 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    min-width: 260px;
+    transition: box-shadow 0.1s;
+  }
+  .clock-face.beep { outline: 4px solid #E24B4A; }
+  .time-block { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .time-num {
+    font-size: 100px;
+    font-weight: 500;
+    color: #FFC800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    min-width: 160px;
+    text-align: center;
+    transition: color 0.3s, transform 0.1s;
+  }
+  .time-num.urgent { color: #E24B4A; }
+  .time-num.bump { transform: scale(1.12); }
+  .time-label { font-size: 14px; color: #888780; font-weight: 400; text-align: center; }
+  .warning-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    background: #E24B4A;
+    padding: 4px 14px;
+    border-radius: 999px;
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .warning-label.show { opacity: 1; }
+  .progress-bar-wrapper {
+    width: 100%; max-width: 360px;
+    background: rgba(255,255,255,0.35);
+    border-radius: 999px; height: 8px;
+    margin-bottom: 2rem; overflow: hidden;
+  }
+  .progress-bar {
+    height: 8px; background: #fff;
+    border-radius: 999px; width: 100%;
+    transition: width 0.5s linear, background 0.3s;
+  }
+  .progress-bar.urgent { background: #E24B4A; }
+  .controls { display: flex; gap: 12px; }
+  .btn {
+    border: none; border-radius: 12px;
+    padding: 12px 28px; font-size: 15px;
+    font-weight: 500; cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-start { background: #fff; color: #A06000; }
+  .btn-reset { background: rgba(255,255,255,0.25); color: #fff; }
+  .btn-stop-alarm { background: #E24B4A; color: #fff; display: none; }
+  .btn:hover { opacity: 0.88; }
+  .done-msg {
+    display: none; font-size: 20px; font-weight: 500;
+    color: #fff; margin-top: 1rem; text-align: center;
+    animation: pulse 0.6s infinite alternate;
+  }
+  @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
+  @keyframes flash { 0%,100% { background: #FFC800; } 50% { background: #E24B4A; } }
+  .wrapper.flashing { animation: flash 0.6s infinite; }
+</style>
+
+<div class="wrapper" id="wrapper">
+  <h2 style="position:absolute;left:-9999px">Timer hitungan mundur penilaian Porseni 60 detik</h2>
+  <div class="badge">🏆 PORSENI</div>
+  <div class="title">Waktu Penilaian Juri</div>
+  <div class="subtitle">Hitungan mundur dimulai saat tombol ditekan</div>
+
+  <div class="clock-face" id="clock-face">
+    <div class="time-block">
+      <div class="time-num" id="sec-display">60</div>
+      <div class="time-label">detik</div>
+    </div>
+  </div>
+  <div class="warning-label" id="warning-label">⚠ Waktu hampir habis!</div>
+
+  <div style="height: 1.5rem;"></div>
+
+  <div class="progress-bar-wrapper">
+    <div class="progress-bar" id="progress"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-start" id="btn-start" onclick="toggleTimer()">
+      <i class="ti ti-player-play" aria-hidden="true"></i> Mulai
+    </button>
+    <button class="btn btn-reset" id="btn-reset" onclick="resetTimer()">
+      <i class="ti ti-refresh" aria-hidden="true"></i> Reset
+    </button>
+    <button class="btn btn-stop-alarm" id="btn-stop" onclick="stopAlarm()">
+      <i class="ti ti-volume-off" aria-hidden="true"></i> Stop Alarm
+    </button>
+  </div>
+
+  <div class="done-msg" id="done-msg">
+    <i class="ti ti-alarm" aria-hidden="true"></i> Waktu Penilaian Selesai!
+  </div>
+</div>
+
+<script>
+const TOTAL = 60;
+let remaining = TOTAL;
+let interval = null;
+let running = false;
+let alarmCtx = null;
+let alarmNodes = [];
+
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function render() {
+  const urgent = remaining <= 5;
+  const el = document.getElementById('sec-display');
+  el.textContent = pad(remaining);
+  el.className = 'time-num' + (urgent ? ' urgent' : '');
+  const pct = (remaining / TOTAL) * 100;
+  const bar = document.getElementById('progress');
+  bar.style.width = pct + '%';
+  bar.className = 'progress-bar' + (urgent ? ' urgent' : '');
+  document.getElementById('warning-label').className = 'warning-label' + (urgent && remaining > 0 ? ' show' : '');
+}
+
+function playBeepTick() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 1046;
+    gain.gain.setValueAtTime(0.5, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.15);
+
+    const el = document.getElementById('sec-display');
+    const face = document.getElementById('clock-face');
+    el.classList.add('bump');
+    face.classList.add('beep');
+    setTimeout(() => { el.classList.remove('bump'); face.classList.remove('beep'); }, 150);
+  } catch(e) {}
+}
+
+function playSiren() {
+  try {
+    alarmCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function sirenCycle(startTime, count) {
+      if (count <= 0) return;
+      const osc = alarmCtx.createOscillator();
+      const gain = alarmCtx.createGain();
+      osc.connect(gain);
+      gain.connect(alarmCtx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(600, startTime);
+      osc.frequency.linearRampToValueAtTime(1200, startTime + 0.5);
+      osc.frequency.linearRampToValueAtTime(600, startTime + 1.0);
+      gain.gain.setValueAtTime(0.4, startTime);
+      gain.gain.setValueAtTime(0.4, startTime + 0.9);
+      gain.gain.linearRampToValueAtTime(0, startTime + 1.0);
+      osc.start(startTime);
+      osc.stop(startTime + 1.0);
+      alarmNodes.push(osc);
+      sirenCycle(startTime + 1.05, count - 1);
+    }
+    sirenCycle(alarmCtx.currentTime, 6);
+  } catch(e) {}
+}
+
+function stopAlarm() {
+  if (alarmCtx) {
+    alarmNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+    alarmCtx.close();
+    alarmCtx = null;
+    alarmNodes = [];
+  }
+  document.getElementById('wrapper').classList.remove('flashing');
+  document.getElementById('btn-stop').style.display = 'none';
+}
+
+function toggleTimer() {
+  if (remaining === 0) return;
+  if (running) {
+    clearInterval(interval);
+    running = false;
+    document.getElementById('btn-start').innerHTML = '<i class="ti ti-player-play" aria-hidden="true"></i> Lanjut';
+  } else {
+    running = true;
+    document.getElementById('btn-start').innerHTML = '<i class="ti ti-player-pause" aria-hidden="true"></i> Jeda';
+    interval = setInterval(() => {
+      if (remaining > 0) {
+        remaining--;
+        render();
+        if (remaining <= 5 && remaining > 0) {
+          playBeepTick();
+        }
+      }
+      if (remaining === 0) {
+        clearInterval(interval);
+        running = false;
+        document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('btn-reset').style.display = 'none';
+        document.getElementById('btn-stop').style.display = '';
+        document.getElementById('done-msg').style.display = 'block';
+        document.getElementById('wrapper').classList.add('flashing');
+        playSiren();
+      }
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  stopAlarm();
+  clearInterval(interval);
+  running = false;
+  remaining = TOTAL;
+  render();
+  document.getElementById('btn-start').innerHTML = '<i class="ti ti-player-play" aria-hidden="true"></i> Mulai';
+  document.getElementById('btn-start').style.display = '';
+  document.getElementById('btn-reset').style.display = '';
+  document.getElementById('done-msg').style.display = 'none';
+}
+
+render();
+</script>
