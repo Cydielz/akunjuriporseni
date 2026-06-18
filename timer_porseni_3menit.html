@@ -1,0 +1,311 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .wrapper {
+    min-height: 520px;
+    background: #FFC800;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 2rem;
+    font-family: var(--font-sans, sans-serif);
+  }
+  .badge {
+    background: #fff;
+    color: #A06000;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+  }
+  .title {
+    font-size: 22px;
+    font-weight: 500;
+    color: #fff;
+    margin-bottom: 0.4rem;
+    text-align: center;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  .clock-face {
+    background: #fff;
+    border-radius: 20px;
+    padding: 1.5rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-bottom: 2rem;
+    min-width: 280px;
+  }
+  .time-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .time-num {
+    font-size: 80px;
+    font-weight: 500;
+    color: #FFC800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    min-width: 110px;
+    text-align: center;
+    transition: color 0.3s;
+  }
+  .time-num.urgent { color: #E24B4A; }
+  .time-sep {
+    font-size: 72px;
+    font-weight: 500;
+    color: #FFC800;
+    line-height: 1;
+    margin-bottom: 20px;
+    transition: color 0.3s;
+  }
+  .time-sep.urgent { color: #E24B4A; }
+  .time-label {
+    font-size: 13px;
+    color: #888780;
+    font-weight: 400;
+    text-align: center;
+  }
+  .progress-bar-wrapper {
+    width: 100%;
+    max-width: 360px;
+    background: rgba(255,255,255,0.35);
+    border-radius: 999px;
+    height: 8px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 8px;
+    background: #fff;
+    border-radius: 999px;
+    width: 100%;
+    transition: width 0.5s linear, background 0.3s;
+  }
+  .progress-bar.urgent { background: #E24B4A; }
+  .controls {
+    display: flex;
+    gap: 12px;
+  }
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-start { background: #fff; color: #A06000; }
+  .btn-reset { background: rgba(255,255,255,0.25); color: #fff; }
+  .btn:hover { opacity: 0.88; }
+  .done-msg {
+    display: none;
+    font-size: 20px;
+    font-weight: 500;
+    color: #fff;
+    margin-top: 1rem;
+    text-align: center;
+    animation: pulse 1s infinite alternate;
+  }
+  @keyframes pulse {
+    from { opacity: 1; }
+    to { opacity: 0.6; }
+  }
+</style>
+
+<div class="wrapper">
+  <h2 style="position:absolute;left:-9999px">Timer hitungan mundur penilaian Porseni 3 menit</h2>
+  <div class="badge">🏆 PORSENI</div>
+  <div class="title">Waktu Penilaian Juri</div>
+  <div class="subtitle">Hitungan mundur dimulai saat tombol ditekan</div>
+
+  <div class="clock-face">
+    <div class="time-group">
+      <div class="time-num" id="min-display">03</div>
+      <div class="time-label">menit</div>
+    </div>
+    <div class="time-sep" id="sep">:</div>
+    <div class="time-group">
+      <div class="time-num" id="sec-display">00</div>
+      <div class="time-label">detik</div>
+    </div>
+  </div>
+
+  <div class="progress-bar-wrapper">
+    <div class="progress-bar" id="progress"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-start" id="btn-start" onclick="toggleTimer()">
+      <i class="ti ti-player-play" aria-hidden="true"></i> Mulai
+    </button>
+    <button class="btn btn-reset" id="btn-reset" onclick="resetTimer()">
+      <i class="ti ti-refresh" aria-hidden="true"></i> Reset
+    </button>
+  </div>
+
+  <div class="done-msg" id="done-msg">
+    <i class="ti ti-star" aria-hidden="true"></i> Waktu Penilaian Selesai!
+  </div>
+</div>
+
+<script>
+const TOTAL = 180;
+let remaining = TOTAL;
+let interval = null;
+let running = false;
+let warningPlayed = false;
+let audioCtx = null;
+
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function render() {
+  const urgent = remaining <= 10;
+  const mins = Math.floor(remaining / 60);
+  const secs = remaining % 60;
+  const minEl = document.getElementById('min-display');
+  const secEl = document.getElementById('sec-display');
+  const sepEl = document.getElementById('sep');
+  minEl.textContent = pad(mins);
+  secEl.textContent = pad(secs);
+  minEl.className = 'time-num' + (urgent ? ' urgent' : '');
+  secEl.className = 'time-num' + (urgent ? ' urgent' : '');
+  sepEl.className = 'time-sep' + (urgent ? ' urgent' : '');
+  const pct = (remaining / TOTAL) * 100;
+  const bar = document.getElementById('progress');
+  bar.style.width = pct + '%';
+  bar.className = 'progress-bar' + (urgent ? ' urgent' : '');
+}
+
+function toggleTimer() {
+  if (remaining === 0) return;
+  if (running) {
+    clearInterval(interval);
+    running = false;
+    document.getElementById('btn-start').innerHTML = '<i class="ti ti-player-play" aria-hidden="true"></i> Lanjut';
+  } else {
+    running = true;
+    document.getElementById('btn-start').innerHTML = '<i class="ti ti-player-pause" aria-hidden="true"></i> Jeda';
+    interval = setInterval(() => {
+      if (remaining > 0) {
+        remaining--;
+        render();
+      }
+      if (remaining === 10 && !warningPlayed) {
+        warningPlayed = true;
+        playWarningBeep();
+      }
+      if (remaining === 0) {
+        clearInterval(interval);
+        running = false;
+        document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('done-msg').style.display = 'block';
+        playApplause();
+      }
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(interval);
+  running = false;
+  remaining = TOTAL;
+  warningPlayed = false;
+  render();
+  document.getElementById('btn-start').innerHTML = '<i class="ti ti-player-play" aria-hidden="true"></i> Mulai';
+  document.getElementById('btn-start').style.display = '';
+  document.getElementById('done-msg').style.display = 'none';
+}
+
+function playWarningBeep() {
+  try {
+    const ctx = getCtx();
+    const now = ctx.currentTime;
+    [0, 0.4, 0.8].forEach(delay => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 1046;
+      o.type = 'sine';
+      g.gain.setValueAtTime(0, now + delay);
+      g.gain.linearRampToValueAtTime(0.6, now + delay + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.35);
+      o.start(now + delay);
+      o.stop(now + delay + 0.35);
+    });
+  } catch(e) {}
+}
+
+function playApplause() {
+  try {
+    const ctx = getCtx();
+    const duration = 4;
+    const bufSize = ctx.sampleRate * duration;
+    const buf = ctx.createBuffer(2, bufSize, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buf.getChannelData(ch);
+      for (let i = 0; i < bufSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.35;
+      }
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bandpass = ctx.createBiquadFilter();
+    bandpass.type = 'bandpass';
+    bandpass.frequency.value = 1200;
+    bandpass.Q.value = 0.8;
+    const highpass = ctx.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.value = 800;
+    const gainNode = ctx.createGain();
+    const now = ctx.currentTime;
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(1.0, now + 0.3);
+    gainNode.gain.setValueAtTime(1.0, now + 2.5);
+    gainNode.gain.linearRampToValueAtTime(0, now + duration);
+    src.connect(bandpass);
+    bandpass.connect(highpass);
+    highpass.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    const crackleCount = 60;
+    for (let i = 0; i < crackleCount; i++) {
+      const t = now + Math.random() * duration * 0.85;
+      const o2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      o2.type = 'sawtooth';
+      o2.frequency.value = 800 + Math.random() * 1600;
+      g2.gain.setValueAtTime(0, t);
+      g2.gain.linearRampToValueAtTime(0.08 + Math.random() * 0.12, t + 0.01);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.04 + Math.random() * 0.06);
+      o2.connect(g2); g2.connect(ctx.destination);
+      o2.start(t); o2.stop(t + 0.1);
+    }
+
+    src.start(now);
+    src.stop(now + duration);
+  } catch(e) {}
+}
+
+render();
+</script>
